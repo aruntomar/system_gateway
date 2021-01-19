@@ -3,7 +3,14 @@ name = "system_gateway"
 version = "0.1.0"
 authors = ["Arun Tomar <tomar.arun@gmail.com>"]
 edition = "2018"
-
+description = "Rust crate that returns a systems default gateway"
+homepage = "https://github.com/aruntomar/system_gateway"
+repository = "https://github.com/aruntomar/system_gateway"
+license = "MIT"
+license-file = "LICENSE"
+keywords = ["system", "gateway", "os", "ip", "network"]
+readme = "README.md"
+categories = ["network-programming"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
