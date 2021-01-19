@@ -49,7 +49,9 @@ fn get_linux_gateway() -> String {
                         .stdin(Stdio::from(ip_out))
                         .output()
                         .expect("Error while running grep default");
-    String::from_utf8(grep_cmd.stdout).unwrap()
+    let output_string = String::from_utf8(grep_cmd.stdout).unwrap();
+    let output = output_string.split_whitespace().collect::<Vec<&str>>();
+    output[2].to_string()
 }
 
 fn get_cmd_args(cmd_str: &str) -> (&str, Vec<&str>) {
