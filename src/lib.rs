@@ -1,57 +1,30 @@
 use std::process::{Command, Stdio, exit};
+use std::error::Error;
 
-
-pub fn gateway() ->  String {
+pub fn gateway() ->  Result<String, Box<dyn Error>> {
     if cfg!(target_os="macos") {
-        get_mac_gateway()
+        // get_mac_gateway()
+        let mac_cmd_str = "netstat -f inet -nr";
+        let output = get_output(mac_cmd_str)?;
+        let split_output: Vec<&str> = output.split_whitespace().collect();
+        Ok(split_output[1].to_string())
     } else if cfg!(target_os = "linux"){
-        get_linux_gateway()
+        // get_linux_gateway()
+        let linux_cmd_str = "ip route show";
+        let output = get_output(linux_cmd_str)?;
+        let output = output.split_whitespace().collect::<Vec<&str>>();
+        Ok(output[2].to_string())        
     } else {
         eprint!("Unsupported OS");
         exit(1);
     }
 }
 
-fn get_mac_gateway() -> String {
-    let cmd = "netstat -f inet -nr";
-    let (program, args) = get_cmd_args(cmd);
-     // for mac
-    let netstat_cmd = Command::new(program)
-                        .args(args)
-                        .stdout(Stdio::piped())
-                        .spawn()
-                        .expect("Failed to run netstat process");
-    let netstat_output = netstat_cmd.stdout.expect("failed to read netstat stdout");
-
-    let grep_cmd = Command::new("grep")
-                        .arg("default")
-                        .stdin(Stdio::from(netstat_output))
-                        .output()
-                        .expect("Error while running grep default");
-
-    let output_string = String::from_utf8(grep_cmd.stdout).unwrap();
-    let split_output: Vec<&str> = output_string.split_whitespace().collect();
-    split_output[1].to_string()
-}
-
-fn get_linux_gateway() -> String {
-    let cmd = "ip route show";
-    let (program, args) = get_cmd_args(cmd);
-    let ip_cmd = Command::new(program)
-                        .args(args)
-                        .stdout(Stdio::piped())
-                        .spawn()
-                        .expect("Failed to run ip route command");
-    let ip_out = ip_cmd.stdout.expect("Failed to read ip route output");
-
-    let grep_cmd = Command::new("grep")
-                        .arg("default")
-                        .stdin(Stdio::from(ip_out))
-                        .output()
-                        .expect("Error while running grep default");
-    let output_string = String::from_utf8(grep_cmd.stdout).unwrap();
-    let output = output_string.split_whitespace().collect::<Vec<&str>>();
-    output[2].to_string()
+fn get_cmd(cmd_str: String) -> Command {
+    let (program, args) = get_cmd_args(&cmd_str);
+    let mut cmd = Command::new(program);
+    cmd.args(args);
+    cmd
 }
 
 fn get_cmd_args(cmd_str: &str) -> (&str, Vec<&str>) {
@@ -60,6 +33,19 @@ fn get_cmd_args(cmd_str: &str) -> (&str, Vec<&str>) {
     let args = cmd_iter.collect();
     (prog, args)
 }
+
+fn get_output(cmd_str: &str) -> Result<String, Box<dyn Error>> {
+    let cmd = get_cmd(cmd_str.to_string())
+                            .stdout(Stdio::piped())
+                            .spawn()?;
+    let netstat_output = cmd.stdout.expect("failed to read netstat stdout");
+    let grep_str = "grep default";
+    let grep_cmd = get_cmd(grep_str.to_string())
+                        .stdin(Stdio::from(netstat_output))
+                        .output()?;
+    Ok(String::from_utf8(grep_cmd.stdout)?)
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -75,11 +61,4 @@ mod tests {
         assert_eq!(args, vec!["-f", "inet", "-nr"]);
     }
 
-    #[test]
-    fn test_gateway() {
-        let length = gateway().split('.').count();
-        // assert_eq!(gateway(), "192.168.0.1");
-        assert!(!gateway().is_empty());
-        assert!(length == 4);
-    }
 }
