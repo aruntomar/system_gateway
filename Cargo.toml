@@ -7,7 +7,6 @@ description = "Rust crate that returns a systems default gateway"
 homepage = "https://github.com/aruntomar/system_gateway"
 repository = "https://github.com/aruntomar/system_gateway"
 license = "MIT"
-license-file = "LICENSE"
 keywords = ["system", "gateway", "os", "ip", "network"]
 readme = "README.md"
 categories = ["network-programming"]
